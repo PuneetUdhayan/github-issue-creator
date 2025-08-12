@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 
+import { Button, TextInput, Textarea, Select } from "@primer/react";
+
 // Main App component
 const App = () => {
   // --- STATE MANAGEMENT ---
@@ -173,9 +175,8 @@ const App = () => {
       }
 
       const result = await response.json();
-      const successMessage = `✅ Success! Your issue has been created. You can view it here: ${
-        result.url || "N/A"
-      }`;
+      const successMessage = `✅ Success! Your issue has been created. You can view it here: ${result.url || "N/A"
+        }`;
       setMessages((prev) => [...prev, { sender: "bot", text: successMessage }]);
     } catch (error) {
       console.error("Error creating GitHub issue:", error);
@@ -198,16 +199,14 @@ const App = () => {
             {messages.map((msg, index) => (
               <div
                 key={index}
-                className={`flex ${
-                  msg.sender === "user" ? "justify-end" : "justify-start"
-                }`}
+                className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"
+                  }`}
               >
                 <div
-                  className={`max-w-xs px-4 py-2 rounded-lg shadow ${
-                    msg.sender === "user"
+                  className={`max-w-xs px-4 py-2 rounded-lg shadow ${msg.sender === "user"
                       ? "bg-blue-600 text-white"
                       : "bg-gray-200 text-gray-800"
-                  }`}
+                    }`}
                 >
                   {msg.text}
                 </div>
@@ -217,22 +216,23 @@ const App = () => {
           </div>
         </div>
         <div>
-          <textarea
-            type="text"
+          <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+            onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
             placeholder="Type your message..."
-            className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            rows={10}
+            className="w-full"
           />
+
         </div>
         <div>
-             <button
+          <Button
             onClick={handleSendMessage}
-            className="ml-3 px-5 py-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+            variant="primary"
           >
             Send
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -243,83 +243,63 @@ const App = () => {
         </h2>
         <div className="space-y-4 text-gray-700">
           <div>
-            <p className="font-medium">GitHub Repository:</p>
-            {/* MODIFICATION: Use dynamic repoOptions from state */}
-            <select
+            <p className="font-medium mb-2">GitHub Repository:</p>
+            <Select
               value={gitIssue.repo}
-              onChange={(e) =>
-                setGitIssue({ ...gitIssue, repo: e.target.value })
-              }
-              className="p-2 bg-gray-100 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setGitIssue({ ...gitIssue, repo: e.target.value })}
+              className="w-full"
             >
-              <option value="">Select Repository</option>
+              <Select.Option value="">Select Repository</Select.Option>
               {repoOptions.map((option) => (
-                <option key={option.url} value={option.url}>
+                <Select.Option key={option.url} value={option.url}>
                   {option.url}
-                </option>
+                </Select.Option>
               ))}
-            </select>
+            </Select>
           </div>
           <div>
-            <p className="font-medium">Assignee:</p>
-            {/* MODIFICATION: Use dynamic assigneeOptions from state */}
-            <input
-              type="text"
-              list="assignee-suggestions"
+            <p className="font-medium mb-2">Assignee:</p>
+            <Select
               value={gitIssue.assignee}
-              onChange={(e) =>
-                setGitIssue({ ...gitIssue, assignee: e.target.value })
-              }
-              placeholder="Type or select assignee"
-              className="p-2 bg-gray-100 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <datalist id="assignee-suggestions">
+              onChange={(e) => setGitIssue({ ...gitIssue, assignee: e.target.value })}
+              className="w-full"
+            >
+              <Select.Option value="">Select Assignee</Select.Option>
               {assigneeOptions.map((option) => (
-                <option
-                  key={option?.githubUsername}
-                  value={option?.githubUsername}
-                />
+                <Select.Option key={option?.githubUsername} value={option?.githubUsername}>
+                  {option?.githubUsername}
+                </Select.Option>
               ))}
-            </datalist>
+            </Select>
           </div>
           <div>
-            <p className="font-medium">Title:</p>
-            <input
-              type="text"
+            <p className="font-medium mb-2">Title:</p>
+            <TextInput
               value={gitIssue.title}
-              onChange={(e) =>
-                setGitIssue({ ...gitIssue, title: e.target.value })
-              }
+              onChange={(e) => setGitIssue({ ...gitIssue, title: e.target.value })}
               placeholder="Enter issue title"
-              className="p-2 bg-gray-100 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full"
+              block
             />
           </div>
           <div>
-            <p className="font-medium">Body:</p>
-            <textarea
+            <p className="font-medium mb-2">Body:</p>
+            <Textarea
               value={gitIssue.body}
-              onChange={(e) =>
-                setGitIssue({ ...gitIssue, body: e.target.value })
-              }
+              onChange={(e) => setGitIssue({ ...gitIssue, body: e.target.value })}
               placeholder="Describe the issue..."
-              rows="4"
-              className="p-2 bg-gray-100 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-24"
+              rows={10}
+              className="w-full"
             />
           </div>
         </div>
-        {/* MODIFICATION: Update button text and disabled state */}
-        <button
+        <Button
           onClick={handleCreateIssue}
           disabled={!gitIssue.repo || !gitIssue.title || isCreating}
-          className={`mt-6 px-6 py-3 rounded-lg shadow-lg font-bold transition duration-200
-            ${
-              !gitIssue.repo || !gitIssue.title || isCreating
-                ? "bg-gray-400 text-gray-600 cursor-not-allowed"
-                : "bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-            }`}
+          variant="success"
         >
           {isCreating ? "Creating Issue..." : "Create Issue"}
-        </button>
+        </Button>
       </div>
     </div>
   );
