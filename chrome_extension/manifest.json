@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "GitHub Issue creator",
+  "version": "1.0",
+  "description": "Adds a button to GitHub that opens a modal with an iframe.",
+  "icons": {
+    "48": "icon.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://github.com/*", "https://github.ibm.com/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
