@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 import { Button, TextInput, Textarea, Select } from "@primer/react";
+import './App.css';
 
 // Main App component
 const App = () => {
@@ -24,6 +27,10 @@ const App = () => {
   // Screenshot state
   const [screenshot, setScreenshot] = useState(null);
   const [includeScreenshot, setIncludeScreenshot] = useState(true);
+
+  // Markdown preview states
+  const [showChatPreview, setShowChatPreview] = useState(false);
+  const [showBodyPreview, setShowBodyPreview] = useState(false);
 
   const messagesEndRef = useRef(null);
 
@@ -67,6 +74,8 @@ const App = () => {
     setCreatedIssue();
     setScreenshot(null);
     setIncludeScreenshot(true);
+    setShowChatPreview(false);
+    setShowBodyPreview(false);
   };
 
   // MODIFICATION: Fetch repos and users from the backend on component load
@@ -309,16 +318,38 @@ const App = () => {
           </div>
         </div>
         <div>
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) =>
-              e.key === "Enter" && !e.shiftKey && handleSendMessage()
-            }
-            placeholder="Type your message..."
-            rows={10}
-            className="w-full"
-          />
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-medium text-gray-700">Message Input</h3>
+            <Button
+              onClick={() => setShowChatPreview(!showChatPreview)}
+              variant="secondary"
+              size="small"
+            >
+              {showChatPreview ? "Edit" : "Preview"}
+            </Button>
+          </div>
+                      {showChatPreview ? (
+              <div className="border border-gray-300 rounded-md p-3 bg-gray-50 min-h-[200px] overflow-y-auto prose prose-sm max-w-none">
+                {input ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {input}
+                  </ReactMarkdown>
+                ) : (
+                  <p className="text-gray-500 italic">No content to preview</p>
+                )}
+              </div>
+          ) : (
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={(e) =>
+                e.key === "Enter" && !e.shiftKey && handleSendMessage()
+              }
+              placeholder="Type your message... (Supports markdown)"
+              rows={10}
+              className="w-full"
+            />
+          )}
         </div>
         <div>
           <Button
@@ -388,16 +419,37 @@ const App = () => {
             />
           </div>
           <div>
-            <p className="font-medium mb-2">Body:</p>
-            <Textarea
-              value={gitIssue.body}
-              onChange={(e) =>
-                setGitIssue({ ...gitIssue, body: e.target.value })
-              }
-              placeholder="Describe the issue..."
-              rows={10}
-              className="w-full"
-            />
+            <div className="flex items-center justify-between mb-2">
+              <p className="font-medium">Body:</p>
+              <Button
+                onClick={() => setShowBodyPreview(!showBodyPreview)}
+                variant="secondary"
+                size="small"
+              >
+                {showBodyPreview ? "Edit" : "Preview"}
+              </Button>
+            </div>
+            {showBodyPreview ? (
+              <div className="border border-gray-300 rounded-md p-3 bg-gray-50 min-h-[200px] overflow-y-auto prose prose-sm max-w-none">
+                {gitIssue.body ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {gitIssue.body}
+                  </ReactMarkdown>
+                ) : (
+                  <p className="text-gray-500 italic">No content to preview</p>
+                )}
+              </div>
+            ) : (
+              <Textarea
+                value={gitIssue.body}
+                onChange={(e) =>
+                  setGitIssue({ ...gitIssue, body: e.target.value })
+                }
+                placeholder="Describe the issue... (Supports markdown)"
+                rows={10}
+                className="w-full"
+              />
+            )}
           </div>
         </div>
         {createdIssue ? (
