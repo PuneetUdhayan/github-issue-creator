@@ -1,14 +1,42 @@
 // Background script to handle extension button clicks
-chrome.action.onClicked.addListener((tab) => {
-  // Inject the content script to show the modal
-  chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    function: showIframeModal
-  });
+chrome.action.onClicked.addListener(async (tab) => {
+  await handleModalOpen(tab);
 });
 
+// Handle messages from content script
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'openModal') {
+    handleModalOpen(sender.tab);
+  }
+});
+
+async function handleModalOpen(tab) {
+  try {
+    // Take a screenshot of the current tab
+    const screenshot = await chrome.tabs.captureVisibleTab(tab.windowId, {
+      format: 'png',
+      quality: 90
+    });
+    
+    // Inject the content script to show the modal with screenshot data
+    chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      function: showIframeModal,
+      args: [screenshot]
+    });
+  } catch (error) {
+    console.error('Failed to take screenshot:', error);
+    // Fallback: show modal without screenshot
+    chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      function: showIframeModal,
+      args: [null]
+    });
+  }
+}
+
 // Function to show the iframe modal (this will be injected into the page)
-function showIframeModal() {
+function showIframeModal(screenshotData) {
   // Prevent creating multiple modals
   if (document.getElementById('my-extension-modal-overlay')) {
     return;
@@ -78,6 +106,16 @@ function showIframeModal() {
     // Only close if the dark background itself is clicked
     if (event.target === overlay) {
       closeModal();
+    }
+  };
+
+  // Wait for iframe to load, then send screenshot data
+  iframe.onload = () => {
+    if (screenshotData) {
+      iframe.contentWindow.postMessage({
+        type: 'SCREENSHOT_DATA',
+        screenshot: screenshotData
+      }, '*');
     }
   };
 
