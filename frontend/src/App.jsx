@@ -5,6 +5,9 @@ import { Button, TextInput, Textarea, Select } from "@primer/react";
 // Main App component
 const App = () => {
   // --- STATE MANAGEMENT ---
+  const [repoOptions, setRepoOptions] = useState([]);
+  const [assigneeOptions, setAssigneeOptions] = useState([]);
+
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [gitIssue, setGitIssue] = useState({
@@ -13,12 +16,14 @@ const App = () => {
     title: "",
     body: "",
   });
-
-  // MODIFICATION: State for dynamic options and loading status
-  const [repoOptions, setRepoOptions] = useState([]);
-  const [assigneeOptions, setAssigneeOptions] = useState([]);
-  const [isCreating, setIsCreating] = useState(false); // To track API call status
+  const [isCreating, setIsCreating] = useState(false);
+  const [isDrafting, setIsDrafting] = useState(false);
   const [originalRequest, setOriginalRequest] = useState();
+  const [createdIssue, setCreatedIssue] = useState();
+  
+  // Screenshot state
+  const [screenshot, setScreenshot] = useState(null);
+  const [includeScreenshot, setIncludeScreenshot] = useState(true);
 
   const messagesEndRef = useRef(null);
 
@@ -26,6 +31,43 @@ const App = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Listen for screenshot data from the Chrome extension
+  useEffect(() => {
+    const handleMessage = (event) => {
+      // Accept messages from any origin since Chrome extension messages don't have a specific origin
+      if (event.data.type === 'SCREENSHOT_DATA') {
+        setScreenshot(event.data.screenshot);
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: "bot",
+            text: "📸 Screenshot captured! You can include it in your GitHub issue below.",
+          },
+        ]);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  const resetState = () => {
+    setMessages([]);
+    setInput("");
+    setGitIssue({
+      repo: "",
+      assignee: "",
+      title: "",
+      body: "",
+    });
+    setIsCreating(false);
+    setIsDrafting(false);
+    setOriginalRequest();
+    setCreatedIssue();
+    setScreenshot(null);
+    setIncludeScreenshot(true);
+  };
 
   // MODIFICATION: Fetch repos and users from the backend on component load
   useEffect(() => {
@@ -80,6 +122,7 @@ const App = () => {
 
   // Process user input to extract GitHub issue details
   const processIssueInput = async (text) => {
+    setIsDrafting(true);
     const lowerText = text.toLowerCase();
 
     if (lowerText.includes("create issue")) {
@@ -89,7 +132,7 @@ const App = () => {
 
     let response;
     if (!originalRequest) {
-      console.log("Original request being processed")
+      console.log("Original request being processed");
       response = await fetch("http://localhost:8000/drafts", {
         method: "POST",
         headers: {
@@ -99,7 +142,7 @@ const App = () => {
       });
       setOriginalRequest(text);
     } else {
-      console.log("Update request being processed")
+      console.log("Update request being processed");
       response = await fetch("http://localhost:8000/refine-draft", {
         method: "POST",
         headers: {
@@ -135,6 +178,7 @@ const App = () => {
     });
     const successMessage = `The git issue editor on the right has been successfully updated.`;
     setMessages((prev) => [...prev, { sender: "bot", text: successMessage }]);
+    setIsDrafting(false);
   };
 
   // MODIFICATION: Call the backend to create the GitHub issue
@@ -157,12 +201,23 @@ const App = () => {
     ]);
 
     try {
-      const response = await fetch("http://localhost:8000/gitissue", {
+      // Prepare issue body with optional screenshot
+      let issueBody = gitIssue.body;
+      if (screenshot && includeScreenshot) {
+        issueBody += `\n\n![Screenshot](${screenshot})`;
+      }
+
+      const response = await fetch("http://localhost:8000/issue", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(gitIssue),
+        body: JSON.stringify({
+          repo_url: gitIssue.repo,
+          assignee_username: gitIssue.assignee,
+          title: gitIssue.title,
+          body: issueBody,
+        }),
       });
 
       if (!response.ok) {
@@ -175,8 +230,10 @@ const App = () => {
       }
 
       const result = await response.json();
-      const successMessage = `✅ Success! Your issue has been created. You can view it here: ${result.url || "N/A"
-        }`;
+      const successMessage = `✅ Success! Your issue has been created. You can view it here: ${
+        result.issue_url || "N/A"
+      }`;
+      setCreatedIssue(result.issue_url);
       setMessages((prev) => [...prev, { sender: "bot", text: successMessage }]);
     } catch (error) {
       console.error("Error creating GitHub issue:", error);
@@ -194,19 +251,55 @@ const App = () => {
         <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
           Interactive Chat
         </h2>
+        
+        {/* Screenshot Display */}
+        {screenshot && (
+          <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-gray-700">📸 Captured Screenshot</h3>
+              <label className="flex items-center space-x-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={includeScreenshot}
+                  onChange={(e) => setIncludeScreenshot(e.target.checked)}
+                  className="rounded"
+                />
+                <span>Include in issue</span>
+              </label>
+            </div>
+            <div className="relative">
+              <img
+                src={screenshot}
+                alt="Captured screenshot"
+                className="max-w-full h-auto rounded border border-gray-300 shadow-sm"
+                style={{ maxHeight: '200px' }}
+              />
+              <button
+                onClick={() => setScreenshot(null)}
+                className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                title="Remove screenshot"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
+        
         <div className="flex-1 overflow-y-auto pr-2">
           <div className="flex flex-col space-y-3">
             {messages.map((msg, index) => (
               <div
                 key={index}
-                className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"
-                  }`}
+                className={`flex ${
+                  msg.sender === "user" ? "justify-end" : "justify-start"
+                }`}
               >
                 <div
-                  className={`max-w-xs px-4 py-2 rounded-lg shadow ${msg.sender === "user"
+                  className={`max-w-xs px-4 py-2 rounded-lg shadow ${
+                    msg.sender === "user"
                       ? "bg-blue-600 text-white"
                       : "bg-gray-200 text-gray-800"
-                    }`}
+                  }`}
                 >
                   {msg.text}
                 </div>
@@ -219,17 +312,20 @@ const App = () => {
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
+            onKeyPress={(e) =>
+              e.key === "Enter" && !e.shiftKey && handleSendMessage()
+            }
             placeholder="Type your message..."
             rows={10}
             className="w-full"
           />
-
         </div>
         <div>
           <Button
             onClick={handleSendMessage}
             variant="primary"
+            inactive={isDrafting || isCreating}
+            loading={isDrafting}
           >
             Send
           </Button>
@@ -246,7 +342,9 @@ const App = () => {
             <p className="font-medium mb-2">GitHub Repository:</p>
             <Select
               value={gitIssue.repo}
-              onChange={(e) => setGitIssue({ ...gitIssue, repo: e.target.value })}
+              onChange={(e) =>
+                setGitIssue({ ...gitIssue, repo: e.target.value })
+              }
               className="w-full"
             >
               <Select.Option value="">Select Repository</Select.Option>
@@ -261,12 +359,17 @@ const App = () => {
             <p className="font-medium mb-2">Assignee:</p>
             <Select
               value={gitIssue.assignee}
-              onChange={(e) => setGitIssue({ ...gitIssue, assignee: e.target.value })}
+              onChange={(e) =>
+                setGitIssue({ ...gitIssue, assignee: e.target.value })
+              }
               className="w-full"
             >
               <Select.Option value="">Select Assignee</Select.Option>
               {assigneeOptions.map((option) => (
-                <Select.Option key={option?.githubUsername} value={option?.githubUsername}>
+                <Select.Option
+                  key={option?.githubUsername}
+                  value={option?.githubUsername}
+                >
                   {option?.githubUsername}
                 </Select.Option>
               ))}
@@ -276,7 +379,9 @@ const App = () => {
             <p className="font-medium mb-2">Title:</p>
             <TextInput
               value={gitIssue.title}
-              onChange={(e) => setGitIssue({ ...gitIssue, title: e.target.value })}
+              onChange={(e) =>
+                setGitIssue({ ...gitIssue, title: e.target.value })
+              }
               placeholder="Enter issue title"
               className="w-full"
               block
@@ -286,20 +391,34 @@ const App = () => {
             <p className="font-medium mb-2">Body:</p>
             <Textarea
               value={gitIssue.body}
-              onChange={(e) => setGitIssue({ ...gitIssue, body: e.target.value })}
+              onChange={(e) =>
+                setGitIssue({ ...gitIssue, body: e.target.value })
+              }
               placeholder="Describe the issue..."
               rows={10}
               className="w-full"
             />
           </div>
         </div>
-        <Button
-          onClick={handleCreateIssue}
-          disabled={!gitIssue.repo || !gitIssue.title || isCreating}
-          variant="success"
-        >
-          {isCreating ? "Creating Issue..." : "Create Issue"}
-        </Button>
+        {createdIssue ? (
+          <div className="flex">
+            <Button onClick={() => window.open(createdIssue, "_blank")}>
+              Got to issue
+            </Button>
+            <Button onClick={resetState} variant="primary">
+              New issue
+            </Button>
+          </div>
+        ) : (
+          <Button
+            onClick={handleCreateIssue}
+            inactive={!gitIssue.repo || !gitIssue.title || isCreating}
+            loading={isCreating}
+            variant="primary"
+          >
+            {isCreating ? "Creating Issue..." : "Create Issue"}
+          </Button>
+        )}
       </div>
     </div>
   );

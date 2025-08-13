@@ -1,18 +1,26 @@
 [
- {
-        "url": "https://github.ibm.com/dap/dap-planning",
-        "description": "For issues related to prompt template assets (PTA) and detached prompt template assets (DTPA) in a project."
-    },
-    {
-        "url": "https://github.ibm.com/NGP-TWC/ml-planning",
-        "description": "For issues related to Watson Machine Learning (WML) models. Also for issues related to Deployment Spaces."
-    },
-    {
-        "url": "https://github.ibm.com/aiopenscale/tracker",
-        "description": "For issues related to the evaluation of a model or PTA, or any issue related to the Openscale service."
-    },{
-        "url": "https://github.ibm.com/wdp-gov/tracker",
-        "description": "For issues related to CAMS or factsheet service. If you cannot determine which repo to use, use this as the default."
-    }
-
+  {
+    "url": "https://github.ibm.com/dap/dap-planning",
+    "description": "For issues related to prompt template assets (PTA) and detached prompt template assets (DTPA) in a project."
+  },
+  {
+    "url": "https://github.ibm.com/NGP-TWC/ml-planning",
+    "description": "For issues related to Watson Machine Learning (WML) models. Also for issues related to Deployment Spaces."
+  },
+  {
+    "url": "https://github.ibm.com/aiopenscale/tracker",
+    "description": "For issues related to the evaluation of a model or PTA, or any issue related to the Openscale service."
+  },
+  {
+    "url": "https://github.ibm.com/aiopenscale/aifs-documentation",
+    "description": "For documentation issues related to the AI factsheet documentation, also known as AIFS docs."
+  },
+  {
+    "url": "https://github.ibm.com/puneet/api-calls",
+    "description": "For issues related to the github issue creator."
+  },
+  {
+    "url": "https://github.ibm.com/wdp-gov",
+    "description": "For issues related to CAMS or factsheet service. If you cannot determine which repo to use, use this as the default."
+  }
 ]

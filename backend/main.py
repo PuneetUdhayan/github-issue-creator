@@ -40,6 +40,13 @@ class Repository(BaseModel):
 class Assignee(BaseModel):
     displayName: str
     githubUsername: str
+
+class IssueCreationResponse(BaseModel):
+    status: bool
+    issue_url: Optional[str]
+    error_message: Optional[str]
+
+
 # --- 2. The Stateless Issue Drafting Service ---
 
 with open("./repos.json", "r", encoding="utf-8") as f:
@@ -160,7 +167,7 @@ def get_repositories():
 def get_repositories():
     return valid_assignees
 
-@app.post("/issue", response_model=List[Assignee], tags=["Git issue"])
+@app.post("/issue", tags=["Git issue"])
 def get_repositories(issue: FullIssueDraft):
     headers = {
         "Authorization": f"token {os.environ['GITHUB_TOKEN']}",
@@ -192,21 +199,15 @@ def get_repositories(issue: FullIssueDraft):
 
     try:
         # Make the POST request to the GitHub API
-        response = requests.post(url, data=json.dumps(data), headers=headers)
-
+        response = requests.post(api_url, data=json.dumps(data), headers=headers)
         # Raise an exception for bad status codes (4xx or 5xx)
         response.raise_for_status()
-
         # If the request was successful (status code 201 Created)
         response_data = response.json()
-        print(f"✅ Successfully created issue #{response_data['number']}.")
-        print(f"   View it here: {response_data['html_url']}")
-        return True
+        return IssueCreationResponse(status=True, issue_url=response_data['html_url'] ,error_message=None)
 
     except requests.exceptions.RequestException as e:
         # Handle potential errors like network issues or invalid API responses
         print(f"❌ Error creating issue: {e}")
         # Print the response content for more detailed error info if available
-        if 'response' in locals() and response.content:
-            print(f"   Response from server: {response.text}")
-        return False
+        return IssueCreationResponse(status=False, issue_url=None, error_message=response.text)
