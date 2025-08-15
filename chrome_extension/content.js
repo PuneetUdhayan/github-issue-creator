@@ -23,6 +23,28 @@ function addGitHubButton() {
   }
 }
 
+// Bridge messages between iframe app and background service worker
+window.addEventListener('message', (event) => {
+  const data = event.data;
+  if (!data || typeof data !== 'object') return;
+
+  if (data.type === 'EXT_START_OAUTH') {
+    chrome.runtime.sendMessage({ action: 'startOAuth' }, (resp) => {
+      try {
+        event.source?.postMessage({ type: 'EXT_AUTH_RESULT', ok: resp?.ok, token: resp?.token, user: resp?.user }, '*');
+      } catch {}
+    });
+  }
+
+  if (data.type === 'EXT_GET_TOKEN') {
+    chrome.runtime.sendMessage({ action: 'getAuthToken' }, (resp) => {
+      try {
+        event.source?.postMessage({ type: 'EXT_AUTH_TOKEN', token: resp?.token, user: resp?.user }, '*');
+      } catch {}
+    });
+  }
+});
+
 // Check if we're on GitHub and add the button if so
 if (window.location.hostname === 'github.com' || window.location.hostname === 'github.ibm.com') {
   // Use a timeout to ensure the page elements are loaded before adding the button

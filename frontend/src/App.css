@@ -161,3 +161,40 @@
 .prose code {
   font-size: 0.875em;
 }
+
+/* Add styles for file upload component */
+.file-upload-container {
+  margin-top: 8px;
+}
+
+.file-drop-zone {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  background-color: #fafafa;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.file-drop-zone:hover {
+  border-color: #0366d6;
+  background-color: #f6f8fa;
+}
+
+.file-drop-zone.drag-over {
+  border-color: #0366d6;
+  background-color: #f0f8ff;
+  transform: scale(1.02);
+}
+
+.file-drop-zone.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.file-drop-zone.disabled:hover {
+  border-color: #ccc;
+  background-color: #fafafa;
+  transform: none;
+}
