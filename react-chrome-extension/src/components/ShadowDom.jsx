@@ -1,5 +1,6 @@
 import React from 'react';
 import root from 'react-shadow';
+import { ThemeProvider } from '@primer/react';
 
 // This component creates the Shadow DOM "box"
 const ShadowDom = ({ children }) => {
@@ -55,7 +56,9 @@ const ShadowDom = ({ children }) => {
       `}</style>
       
       {/* Your actual components are rendered here, inside the protection of the shadow boundary */}
-      {children}
+      <ThemeProvider>
+        {children}
+      </ThemeProvider>
     </root.div>
   );
 };

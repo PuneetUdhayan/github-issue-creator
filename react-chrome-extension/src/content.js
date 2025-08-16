@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import Overlay from './components/Overlay.jsx';
+import './index.css';
 
 let overlayRoot = null;
 let isOverlayVisible = false;

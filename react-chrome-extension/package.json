@@ -8,6 +8,8 @@
     "build": "vite build"
   },
   "dependencies": {
+    "@primer/octicons-react": "^19.15.5",
+    "@primer/react": "^37.31.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-shadow": "^20.6.0"
