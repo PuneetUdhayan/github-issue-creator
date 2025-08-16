@@ -9,7 +9,12 @@
   "permissions": [
     "activeTab",
     "scripting",
-    "tabs"
+    "tabs",
+    "storage",
+    "identity"
+  ],
+  "host_permissions": [
+    "https://github.ibm.com/"
   ],
   "action": {
     "default_title": "Open Issue Creator"
@@ -22,5 +27,12 @@
       "matches": ["<all_urls>"],
       "js": ["content.js"]
     }
-  ]
+  ],
+  "oauth2": {
+    "client_id": "4c5304c642424b9bccf7.apps.googleusercontent.com",
+    "scopes": [
+      "repo",
+      "user"
+    ]
+  }
 }

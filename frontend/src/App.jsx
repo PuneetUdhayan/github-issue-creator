@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import { Button, TextInput, Textarea, Select } from "@primer/react";
-import './App.css';
+import "./App.css";
 
 // Main App component
 const App = () => {
@@ -23,7 +23,7 @@ const App = () => {
   const [isDrafting, setIsDrafting] = useState(false);
   const [originalRequest, setOriginalRequest] = useState();
   const [createdIssue, setCreatedIssue] = useState();
-  
+
   // Screenshot state
   const [screenshot, setScreenshot] = useState(null);
   const [includeScreenshot, setIncludeScreenshot] = useState(true);
@@ -43,7 +43,7 @@ const App = () => {
   useEffect(() => {
     const handleMessage = (event) => {
       // Accept messages from any origin since Chrome extension messages don't have a specific origin
-      if (event.data.type === 'SCREENSHOT_DATA') {
+      if (event.data.type === "SCREENSHOT_DATA") {
         setScreenshot(event.data.screenshot);
         setMessages((prev) => [
           ...prev,
@@ -55,8 +55,8 @@ const App = () => {
       }
     };
 
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
   }, []);
 
   const resetState = () => {
@@ -260,12 +260,13 @@ const App = () => {
         <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
           Interactive Chat
         </h2>
-        
         {/* Screenshot Display */}
         {screenshot && (
           <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-gray-700">📸 Captured Screenshot</h3>
+              <h3 className="text-sm font-medium text-gray-700">
+                📸 Captured Screenshot
+              </h3>
               <label className="flex items-center space-x-2 text-sm">
                 <input
                   type="checkbox"
@@ -281,7 +282,7 @@ const App = () => {
                 src={screenshot}
                 alt="Captured screenshot"
                 className="max-w-full h-auto rounded border border-gray-300 shadow-sm"
-                style={{ maxHeight: '200px' }}
+                style={{ maxHeight: "200px" }}
               />
               <button
                 onClick={() => setScreenshot(null)}
@@ -293,7 +294,7 @@ const App = () => {
             </div>
           </div>
         )}
-        
+
         <div className="flex-1 overflow-y-auto pr-2">
           <div className="flex flex-col space-y-3">
             {messages.map((msg, index) => (
@@ -328,16 +329,16 @@ const App = () => {
               {showChatPreview ? "Edit" : "Preview"}
             </Button>
           </div>
-                      {showChatPreview ? (
-              <div className="border border-gray-300 rounded-md p-3 bg-gray-50 min-h-[200px] overflow-y-auto prose prose-sm max-w-none">
-                {input ? (
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {input}
-                  </ReactMarkdown>
-                ) : (
-                  <p className="text-gray-500 italic">No content to preview</p>
-                )}
-              </div>
+          {showChatPreview ? (
+            <div className="border border-gray-300 rounded-md p-3 bg-gray-50 min-h-[200px] overflow-y-auto prose prose-sm max-w-none">
+              {input ? (
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {input}
+                </ReactMarkdown>
+              ) : (
+                <p className="text-gray-500 italic">No content to preview</p>
+              )}
+            </div>
           ) : (
             <Textarea
               value={input}

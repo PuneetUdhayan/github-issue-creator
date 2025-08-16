@@ -7,7 +7,7 @@ from typing import Optional, List
 from urllib.parse import urlparse
 
 import requests
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -211,3 +211,82 @@ def get_repositories(issue: FullIssueDraft):
         print(f"❌ Error creating issue: {e}")
         # Print the response content for more detailed error info if available
         return IssueCreationResponse(status=False, issue_url=None, error_message=response.text)
+
+class TokenResponse(BaseModel):
+    """Defines the structure for a successful token response."""
+    access_token: str
+    token_type: str
+    scope: str
+
+@app.post(
+    "/api/auth/github/callback",
+    response_model=TokenResponse,
+    summary="GitHub OAuth Callback",
+    tags=["Authentication"]
+)
+def github_oauth_callback(code: str = Query(..., description="The authorization code provided by GitHub.")):
+    """
+    This endpoint receives the authorization code from GitHub after a user
+    approves the OAuth application. It then exchanges this code for an
+    access token by making a server-to-server request to GitHub.
+
+    - **code**: The temporary authorization code from the query parameter.
+    """
+
+    # Prepare the parameters for the POST request to GitHub's token URL
+    params = {
+        "client_id": os.environ['GITHUB_CLIENT_ID'],
+        "client_secret": os.environ['GITHUB_CLIENT_SECRET'],
+        "code": code,
+    }
+
+    # Set the header to accept the response in JSON format
+    headers = {
+        "Accept": "application/json"
+    }
+
+    # Use the requests library for making the synchronous HTTP request
+    try:
+        # Make the POST request to exchange the code for an access token
+        response = requests.post(os.environ['GITHUB_TOKEN_URL'], params=params, headers=headers)
+
+        # Raise an exception for non-2xx (error) status codes
+        response.raise_for_status()
+
+    except requests.exceptions.RequestException as exc:
+        # Handle potential network errors or issues with the request itself
+        raise HTTPException(
+            status_code=503,
+            detail=f"An error occurred while requesting the access token from GitHub: {exc}"
+        )
+    except requests.exceptions.HTTPError as exc:
+        # Handle non-2xx responses from GitHub
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=f"GitHub API returned an error: {exc.response.text}"
+        )
+
+    # Parse the JSON response from GitHub
+    response_data = response.json()
+
+    # Check if the response contains an error from GitHub
+    if "error" in response_data:
+        error_description = response_data.get("error_description", "No description provided.")
+        raise HTTPException(
+            status_code=400,
+            detail=f"GitHub returned an error: {response_data['error']} - {error_description}"
+        )
+
+    # Check if the access_token is in the response
+    if "access_token" not in response_data:
+        raise HTTPException(
+            status_code=500,
+            detail="The access token was not found in the response from GitHub."
+        )
+
+    return TokenResponse(
+        access_token=response_data.get("access_token"),
+        token_type=response_data.get("token_type"),
+        scope=response_data.get("scope"),
+    )
+  
